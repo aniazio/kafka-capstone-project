@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,7 +20,15 @@ public class KafkaBasicSender {
     @Scheduled(fixedDelay = 2, timeUnit = TimeUnit.SECONDS)
     public void sendMessage() {
         log.info("Sending message: " + counter);
-        kafkaTemplate.send(topicName, "Message " + counter++);
+        var future = kafkaTemplate.send(topicName, "Message " + counter++);
+        future.whenComplete((result, exception) -> {
+            if(exception != null) {
+                log.error("Error while sending message", exception);
+            } else {
+                log.info("Message sent successfully");
+            }
+        }
+        );
     }
 
 }
