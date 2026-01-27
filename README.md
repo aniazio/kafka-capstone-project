@@ -2,7 +2,7 @@
 
 ## Description
 
-This project is a capstone project for the Kafka course. 
+This project is a capstone project for the Kafka course.
 
 ## Commands used to start Kafka and create topics
 
@@ -16,4 +16,17 @@ docker exec --workdir /opt/kafka/bin/ -it broker-1 sh
 
 # stop Kafka
 docker compose down
+```
+
+## Commands to trigger file read by connector - need to write it in the code
+
+```bash
+curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{
+  "name": "csv-loader",
+  "config": {
+    "connector.class": "org.apache.kafka.connect.file.FileStreamSourceConnector",
+    "file": "/data/github-accounts.csv",
+    "topic": "test-topic"
+  }
+}'
 ```

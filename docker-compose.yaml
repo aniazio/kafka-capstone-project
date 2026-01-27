@@ -10,9 +10,9 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@controller-1:9093,2@controller-2:9093,3@controller-3:9093
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-#      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
-#      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+  #      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+  #      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+  #      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
 
   controller-2:
     image: apache/kafka:4.1.1
@@ -112,3 +112,13 @@ services:
       - controller-1
       - controller-2
       - controller-3
+
+  connect:
+    image: apache/kafka:4.1.1
+    container_name: connect
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./connector-config/file-reader-connector-config.properties:/opt/kafka/config/custom-connect.properties
+      - ./data:/data
+    command: /opt/kafka/bin/connect-distributed.sh /opt/kafka/config/custom-connect.properties
