@@ -25,8 +25,11 @@ curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json
   "name": "csv-loader",
   "config": {
     "connector.class": "org.apache.kafka.connect.file.FileStreamSourceConnector",
-    "file": "/data/github-accounts.csv",
+    "file": "/data/github-accounts.csv",  
     "topic": "test-topic"
   }
 }'
 ```
+
+TODO: http://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-commits
+build a response
