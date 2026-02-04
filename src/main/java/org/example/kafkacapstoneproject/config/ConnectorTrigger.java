@@ -2,11 +2,12 @@ package org.example.kafkacapstoneproject.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.example.kafkacapstoneproject.webclient.WebClientHelper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -29,7 +30,7 @@ public class ConnectorTrigger {
                 "confing", Map.of(
                         "connector.class", "org.apache.kafka.connect.file.FileStreamSourceConnector",
                         "file", "/data/github-accounts.csv",
-                        "topic", KafkaConfig.GITHUB_ACCOUNTS_TOPIC
+                        "topic", AppConfig.GITHUB_ACCOUNTS_TOPIC
                 )
         );
     }
@@ -41,9 +42,14 @@ public class ConnectorTrigger {
                 .bodyValue(payload)
                 .header(CONTENT_TYPE, "application/json")
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, WebClientHelper::handleError)
-                .onStatus(HttpStatusCode::is5xxServerError, WebClientHelper::handleError)
+                .onStatus(HttpStatusCode::is4xxClientError, this::handleError)
+                .onStatus(HttpStatusCode::is5xxServerError, this::handleError)
                 .bodyToMono(Void.class)
                 .block();
+    }
+
+    public Mono<? extends Throwable> handleError(ClientResponse clientResponse) {
+        log.error(clientResponse.toString());
+        return Mono.error(new RuntimeException("Failed to trigger file reader"));
     }
 }

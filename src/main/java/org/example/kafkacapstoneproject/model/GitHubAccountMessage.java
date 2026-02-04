@@ -5,13 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 
 @Data
 @Builder
 public class GitHubAccountMessage {
 
     private String accountName;
-    private LocalDateTime date;
+    private Date date;
 
     public static GitHubAccountMessage buildFromCsv(String message) {
         String[] split = message.split(",");
@@ -22,7 +24,7 @@ public class GitHubAccountMessage {
 
         return GitHubAccountMessage.builder()
                 .accountName(split[0].trim())
-                .date(getDate(split[1]))
+                .date(Date.from(getDate(split[1]).toInstant(ZoneOffset.UTC)))
                 .build();
     }
 

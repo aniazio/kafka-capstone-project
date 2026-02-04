@@ -1,38 +1,48 @@
 package org.example.kafkacapstoneproject.github;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.kafkacapstoneproject.model.GitHubAccountMessage;
-import org.example.kafkacapstoneproject.model.GitHubResponse;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
-import org.example.kafkacapstoneproject.webclient.WebClientHelper;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.HttpStatusCode;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
-import static org.springframework.http.HttpHeaders.ACCEPT;
-
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class GithubApiAdapter {
 
-    private final WebClient webClient;
-
-    public GithubApiAdapter(@Qualifier("githubWebClient") WebClient webClient) {
-        this.webClient = webClient;
-    }
+    private final GitHub github;
 
     public List<GithubCommitMessage> getCommits(GitHubAccountMessage requestParams) {
-        String searchQuery = "author-name:" + requestParams.getAccountName() + " +author-date>" + requestParams.getDate();
-        return webClient.get()
-                .uri("search/commits?q=" + searchQuery)
-                .header(ACCEPT, "application/vnd.github+json")
-                .header("X-GitHub-Api-Version", "2022-11-28")
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, WebClientHelper::handleError)
-                .onStatus(HttpStatusCode::is5xxServerError, WebClientHelper::handleError)
-                .bodyToMono(GitHubResponse.class)
-                .map(GitHubResponse::getCommitMessages)
-                .block();
+        List<GithubCommitMessage> results = new ArrayList<>();
+        GHUser user;
+        try {
+            user = github.getUser(requestParams.getAccountName());
+
+            for (GHRepository repo : user.listRepositories()) {
+                String language = repo.getLanguage(); // Primary language
+
+                List<GithubCommitMessage> commits = repo.queryCommits()
+                        .author(requestParams.getAccountName())
+                        .since(requestParams.getDate())
+                        .list()
+                        .toList()
+                        .stream()
+                        .map(commit -> new GithubCommitMessage(commit, language))
+                        .toList();
+
+                results.addAll(commits);
+            }
+        } catch (IOException e) {
+            log.error("Error while getting commits", e);
+        }
+        return results;
     }
 }

@@ -1,15 +1,18 @@
 package org.example.kafkacapstoneproject.config;
 
 import org.apache.kafka.clients.admin.NewTopic;
+import org.kohsuke.github.GitHub;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
+
 @Configuration
 @EnableScheduling
-public class KafkaConfig {
+public class AppConfig {
 
     public static final String GITHUB_ACCOUNTS_TOPIC = "github-accounts";
 
@@ -21,14 +24,12 @@ public class KafkaConfig {
                 .build();
     }
 
-    @Bean("githubWebClient")
-    public WebClient githubWebClient() {
-        return WebClient.builder()
-                .baseUrl("https://api.github.com")
-                .build();
+    @Bean
+    public GitHub githubWebClient() throws IOException {
+        return GitHub.connect();
     }
 
-    @Bean("fileReaderConnectorWebClient")
+    @Bean
     public WebClient fileReaderConnectorWebClient() {
         return WebClient.builder()
                 .baseUrl("http://localhost:8083")
