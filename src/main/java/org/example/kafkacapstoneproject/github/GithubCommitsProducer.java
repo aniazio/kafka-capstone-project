@@ -22,17 +22,17 @@ public class GithubCommitsProducer {
 
     @KafkaListener(id = "github-listener", topics = AppConfig.GITHUB_ACCOUNTS_TOPIC)
     public void listen(String message) {
-        GitHubAccountMessage gitHubAccountMessage = GitHubAccountMessage.buildFromCsv(message);
+        final GitHubAccountMessage gitHubAccountMessage = GitHubAccountMessage.buildFromCsv(message);
         if (gitHubAccountMessage == null) {
             return;
         }
         List<GithubCommitMessage> commits = githubApiAdapter.getCommits(gitHubAccountMessage);
-        sendCommits(commits);
+        sendCommits(commits, gitHubAccountMessage.getAccountName());
     }
 
-    private void sendCommits(List<GithubCommitMessage> commits) {
+    private void sendCommits(List<GithubCommitMessage> commits, String accountName) {
         commits.stream()
-                .map(commit -> kafkaTemplate.send(AppConfig.GITHUB_ACCOUNTS_TOPIC, commit))
+                .map(commit -> kafkaTemplate.send(AppConfig.GITHUB_ACCOUNTS_TOPIC, accountName, commit))
                 .forEach(future -> future.whenComplete(this::handleException));
     }
 
