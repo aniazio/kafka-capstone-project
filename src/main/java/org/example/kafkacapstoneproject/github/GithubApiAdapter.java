@@ -35,7 +35,13 @@ public class GithubApiAdapter {
                         .list()
                         .toList()
                         .stream()
-                        .map(commit -> new GithubCommitMessage(commit, language))
+                        .map(commit -> {
+                            try {
+                                return new GithubCommitMessage(commit, language);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        })
                         .toList();
 
                 results.addAll(commits);
