@@ -2,14 +2,17 @@ package org.example.kafkacapstoneproject.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.kohsuke.github.GHCommit;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @AllArgsConstructor
-public class GithubCommitMessage {
+@NoArgsConstructor
+public class GithubCommitMessage implements Serializable {
 
     private String commitId;
     private String language;

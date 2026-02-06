@@ -50,6 +50,6 @@ public class ConnectorTrigger {
 
     public Mono<? extends Throwable> handleError(ClientResponse clientResponse) {
         log.error(clientResponse.toString());
-        return Mono.error(new RuntimeException("Failed to trigger file reader"));
+        return Mono.empty();
     }
 }

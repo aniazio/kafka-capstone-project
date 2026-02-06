@@ -1,12 +1,17 @@
 package org.example.kafkacapstoneproject.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.io.Serializable;
 import java.util.TreeSet;
 
 @Data
-public class TopFiveContributors {
+@NoArgsConstructor
+@AllArgsConstructor
+public class TopFiveContributors implements Serializable {
 
     TreeSet<Pair<Long, String>> namesByCommits = new TreeSet<>((o1, o2) -> {
         final int result = o2.getLeft().compareTo(o1.getLeft());

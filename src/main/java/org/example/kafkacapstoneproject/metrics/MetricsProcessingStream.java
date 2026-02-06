@@ -1,35 +1,38 @@
 package org.example.kafkacapstoneproject.metrics;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
+import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 import org.example.kafkacapstoneproject.config.AppConfig;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
+import org.example.kafkacapstoneproject.model.MyPair;
 import org.example.kafkacapstoneproject.model.SameAuthorStats;
 import org.example.kafkacapstoneproject.model.TopFiveContributors;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MetricsProcessingStream {
 
-    private final String TOTAL_COMMITS = AppConfig.GITHUB_METRICS_PREFIX + "total-commits";
-    private final String TOTAL_COMMITERS = AppConfig.GITHUB_METRICS_PREFIX + "total-commiters";
-    private final String COMMITS_PER_LANGUAGE = AppConfig.GITHUB_METRICS_PREFIX + "commits-per-language";
-    private final String TOP_FIVE_CONTRIBUTORS_BY_COMMITS = AppConfig.GITHUB_METRICS_PREFIX + "top-five-contributors-by-commits";
-    private final String NUMBER_OF_LINES_EDITED = AppConfig.GITHUB_METRICS_PREFIX + "number-of-lines-edited";
-    private final String INCREMENT_OF_LINES = AppConfig.GITHUB_METRICS_PREFIX + "increment-of-lines";
-    private final String TOP_FIVE_CONTRIBUTORS_BY_LINES_EDITED = AppConfig.GITHUB_METRICS_PREFIX + "top-five-contributors-by-lines-edited";
-    private final String PERCENT_OF_COMMITS_WITH_THE_SAME_AUTHOR_AND_COMMITER = AppConfig.GITHUB_METRICS_PREFIX + "percent-of-commits-with-the-same-author-and-committer";
+    public final static String TOTAL_COMMITS = AppConfig.GITHUB_METRICS_PREFIX + "total-commits";
+    public final static String TOTAL_COMMITERS = AppConfig.GITHUB_METRICS_PREFIX + "total-commiters";
+    public final static String COMMITS_PER_LANGUAGE = AppConfig.GITHUB_METRICS_PREFIX + "commits-per-language";
+    public final static String TOP_FIVE_CONTRIBUTORS_BY_COMMITS = AppConfig.GITHUB_METRICS_PREFIX + "top-five-contributors-by-commits";
+    public final static String NUMBER_OF_LINES_EDITED = AppConfig.GITHUB_METRICS_PREFIX + "number-of-lines-edited";
+    public final static String INCREMENT_OF_LINES = AppConfig.GITHUB_METRICS_PREFIX + "increment-of-lines";
+    public final static String TOP_FIVE_CONTRIBUTORS_BY_LINES_EDITED = AppConfig.GITHUB_METRICS_PREFIX + "top-five-contributors-by-lines-edited";
+    public final static String PERCENT_OF_COMMITS_WITH_THE_SAME_AUTHOR_AND_COMMITER = AppConfig.GITHUB_METRICS_PREFIX + "percent-of-commits-with-the-same-author-and-committer";
 
     @Autowired
     public void process(StreamsBuilder streamsBuilder) {
-        KStream<String, GithubCommitMessage> input = streamsBuilder.stream(AppConfig.GITHUB_ACCOUNTS_TOPIC);
+        KStream<String, GithubCommitMessage> input = streamsBuilder.stream(AppConfig.GITHUB_ACCOUNTS_TOPIC,
+                Consumed.with(Serdes.String(), new JsonSerde<>(GithubCommitMessage.class)));
 
         measureTotalNumberOfCommits(input);
         measureTotalNumberOfCommiters(input);
@@ -99,8 +102,8 @@ public class MetricsProcessingStream {
         input.map((key, value) -> KeyValue.pair(value.getCommitId(), value.getAuthorName().equals(value.getCommitterName())))
                 .groupBy((key, value) -> value)
                 .count()
-                .groupBy((key, value) -> KeyValue.pair("stats", Pair.of(key, value)),
-                        Grouped.with(Serdes.String(), Serdes.serdeFrom(Pair.class)))
+                .groupBy((key, value) -> KeyValue.pair("stats", MyPair.of(key, value)),
+                        Grouped.with(Serdes.String(), new JsonSerde<>(MyPair.class)))
                 .aggregate(
                         SameAuthorStats::new,
                         (key, newValue, aggregate) -> {
@@ -118,20 +121,20 @@ public class MetricsProcessingStream {
 
     private void convertKTableToTopFive(KTable<String, Long> linesPerUser, String topicName) {
         linesPerUser
-                .groupBy((key, value) -> KeyValue.pair("all", Pair.of(key, value)),
-                        Grouped.with(Serdes.String(), Serdes.serdeFrom(Pair.class)))
+                .groupBy((key, value) -> KeyValue.pair("all", MyPair.of(key, value)),
+                        Grouped.with(Serdes.String(), new JsonSerde<>(MyPair.class)))
                 .aggregate(
                         TopFiveContributors::new,
                         (key, value, aggregate) -> {
-                            aggregate.add((String) value.getKey(), (Long) value.getValue());
+                            aggregate.add((String) value.getLeft(), (Long) value.getRight());
                             return aggregate;
                         },
                         (key, value, aggregate) -> {
-                            aggregate.remove((String) value.getKey(), (Long) value.getValue());
+                            aggregate.remove((String) value.getLeft(), (Long) value.getRight());
                             return aggregate;
                         })
                 .toStream()
-                .to(topicName, Produced.with(Serdes.String(), Serdes.serdeFrom(TopFiveContributors.class)));
+                .to(topicName, Produced.with(Serdes.String(), new JsonSerde<>(TopFiveContributors.class)));
     }
 
 }

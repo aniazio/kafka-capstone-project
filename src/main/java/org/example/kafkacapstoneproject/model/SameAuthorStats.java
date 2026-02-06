@@ -1,9 +1,15 @@
 package org.example.kafkacapstoneproject.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 
 @Data
-public class SameAuthorStats {
+@NoArgsConstructor
+@AllArgsConstructor
+public class SameAuthorStats implements Serializable {
     private long total;
     private long sameAuthor;
     private double percent;

@@ -1,16 +1,21 @@
 package org.example.kafkacapstoneproject.model;
 
 import io.micrometer.common.util.StringUtils;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
 
 @Data
 @Builder
-public class GitHubAccountMessage {
+@NoArgsConstructor
+@AllArgsConstructor
+public class GitHubAccountMessage implements Serializable {
 
     private String accountName;
     private Date date;
