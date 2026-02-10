@@ -10,100 +10,130 @@ import org.apache.kafka.streams.kstream.KTable;
 import org.apache.kafka.streams.kstream.Produced;
 import org.example.kafkacapstoneproject.config.AppConfig;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
+import org.example.kafkacapstoneproject.model.MetricsAggregation;
 import org.example.kafkacapstoneproject.model.MyPair;
 import org.example.kafkacapstoneproject.model.SameAuthorStats;
 import org.example.kafkacapstoneproject.model.TopFiveContributors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class MetricsProcessingStream {
 
-    public final static String TOTAL_COMMITS = AppConfig.GITHUB_METRICS_PREFIX + "total-commits";
-    public final static String TOTAL_COMMITERS = AppConfig.GITHUB_METRICS_PREFIX + "total-commiters";
-    public final static String COMMITS_PER_LANGUAGE = AppConfig.GITHUB_METRICS_PREFIX + "commits-per-language";
-    public final static String TOP_FIVE_CONTRIBUTORS_BY_COMMITS = AppConfig.GITHUB_METRICS_PREFIX + "top-five-contributors-by-commits";
-    public final static String NUMBER_OF_LINES_EDITED = AppConfig.GITHUB_METRICS_PREFIX + "number-of-lines-edited";
-    public final static String INCREMENT_OF_LINES = AppConfig.GITHUB_METRICS_PREFIX + "increment-of-lines";
-    public final static String TOP_FIVE_CONTRIBUTORS_BY_LINES_EDITED = AppConfig.GITHUB_METRICS_PREFIX + "top-five-contributors-by-lines-edited";
-    public final static String PERCENT_OF_COMMITS_WITH_THE_SAME_AUTHOR_AND_COMMITER = AppConfig.GITHUB_METRICS_PREFIX + "percent-of-commits-with-the-same-author-and-committer";
-
     @Autowired
     public void process(StreamsBuilder streamsBuilder) {
         KStream<String, GithubCommitMessage> input = streamsBuilder.stream(AppConfig.GITHUB_ACCOUNTS_TOPIC,
-                Consumed.with(Serdes.String(), new JsonSerde<>(GithubCommitMessage.class)));
+                Consumed.with(Serdes.String(), Serdes.serdeFrom(GithubCommitMessage.class)));
 
-        measureTotalNumberOfCommits(input);
-        measureTotalNumberOfCommiters(input);
-        measureCommitsPerLanguage(input);
-        measureTopFiveContributorsByCommits(input);
-        measureNumberOfLinesEdited(input);
-        measureIncrementOfLines(input);
-        measureTopFiveContributorsByLines(input);
-        measurePercentOfCommitsWithTheSameAuthorAndCommitter(input);
-    }
+        KTable<String, Long> totalCommits = measureTotalNumberOfCommits(input);
+        KTable<String, Long> totalCommiters = measureTotalNumberOfCommiters(input);
+        KTable<String, Map<String, Long>> commitsPerLanguage = measureCommitsPerLanguage(input);
+        KTable<String, TopFiveContributors> topFiveContributorsByCommits = measureTopFiveContributorsByCommits(input);
+        KTable<String, Long> numberOfLines = measureNumberOfLinesEdited(input);
+        KTable<String, Long> incrementOfLines = measureIncrementOfLines(input);
+        KTable<String, TopFiveContributors> topFiveContributorsByLines = measureTopFiveContributorsByLines(input);
+        KTable<String, Double> percentOfCommitsWithTheSameAuthorAndCommitter = measurePercentOfCommitsWithTheSameAuthorAndCommitter(input);
 
-    private void measureTotalNumberOfCommits(KStream<String, GithubCommitMessage> input) {
-        input.groupBy((key, value) -> "total-count")
-                .count()
+        totalCommits.leftJoin(totalCommiters,
+                        MetricsAggregation::new)
+                .leftJoin(commitsPerLanguage,
+                        (metrics, newMetric) -> {
+                            metrics.setCommitsPerLanguage(newMetric);
+                            return metrics;
+                        })
+                .leftJoin(topFiveContributorsByCommits,
+                        (metrics, newMetric) -> {
+                            metrics.setTopFiveContributorsByCommits(newMetric);
+                            return metrics;
+                        })
+                .leftJoin(numberOfLines,
+                        (metrics, newMetric) -> {
+                            metrics.setNumberOfLines(newMetric);
+                            return metrics;
+                        })
+                .leftJoin(incrementOfLines,
+                        (metrics, newMetric) -> {
+                            metrics.setIncrementOfLines(newMetric);
+                            return metrics;
+                        })
+                .leftJoin(topFiveContributorsByLines,
+                        (metrics, newMetric) -> {
+                            metrics.setTopFiveContributorsByLines(newMetric);
+                            return metrics;
+                        })
+                .leftJoin(percentOfCommitsWithTheSameAuthorAndCommitter,
+                        (metrics, newMetric) -> {
+                            metrics.setPercentOfCommitsWithTheSameAuthorAndCommitter(newMetric);
+                            return metrics;
+                        })
                 .toStream()
-                .to(TOTAL_COMMITS, Produced.with(Serdes.String(), Serdes.Long()));
+                .to(AppConfig.GITHUB_METRICS_TOPIC, Produced.with(Serdes.String(), Serdes.serdeFrom(MetricsAggregation.class)));
     }
 
-    private void measureTotalNumberOfCommiters(KStream<String, GithubCommitMessage> input) {
-        input.groupBy((key, value) -> value.getCommitterName())
+    private KTable<String, Long> measureTotalNumberOfCommits(KStream<String, GithubCommitMessage> input) {
+        return input.groupBy((key, value) -> "total-count")
+                .count();
+    }
+
+    private KTable<String, Long> measureTotalNumberOfCommiters(KStream<String, GithubCommitMessage> input) {
+        return input.groupBy((key, value) -> value.getCommitterName())
+                .count();
+    }
+
+    private KTable<String, Map<String, Long>> measureCommitsPerLanguage(KStream<String, GithubCommitMessage> input) {
+        return input.groupBy((key, value) -> value.getLanguage())
                 .count()
-                .toStream()
-                .to(TOTAL_COMMITERS, Produced.with(Serdes.String(), Serdes.Long()));
+                .groupBy((key, value) -> KeyValue.pair("all", MyPair.of(key, value)),
+                        Grouped.with(Serdes.String(), Serdes.serdeFrom(MyPair.class)))
+                .aggregate(HashMap::new,
+                        (key, value, aggregate) -> {
+                            aggregate.put((String) value.getLeft(), (Long) value.getRight());
+                            return aggregate;
+                        },
+                        (key, value, aggregate) -> {
+                            aggregate.remove((String) value.getLeft(), (Long) value.getRight());
+                            return aggregate;
+                        });
     }
 
-    private void measureCommitsPerLanguage(KStream<String, GithubCommitMessage> input) {
-        input.groupBy((key, value) -> value.getLanguage())
-                .count()
-                .toStream()
-                .to(COMMITS_PER_LANGUAGE, Produced.with(Serdes.String(), Serdes.Long()));
-    }
-
-    private void measureTopFiveContributorsByCommits(KStream<String, GithubCommitMessage> input) {
+    private KTable<String, TopFiveContributors> measureTopFiveContributorsByCommits(KStream<String, GithubCommitMessage> input) {
         KTable<String, Long> commitsPerUser = input
                 .groupBy((key, value) -> value.getCommitterName())
                 .count();
 
-        convertKTableToTopFive(commitsPerUser, TOP_FIVE_CONTRIBUTORS_BY_COMMITS);
+        return convertKTableToTopFive(commitsPerUser);
     }
 
-    private void measureNumberOfLinesEdited(KStream<String, GithubCommitMessage> input) {
-        input.map((key, value) -> KeyValue.pair(key, (long) value.getLinesChanged()))
+    private KTable<String, Long> measureNumberOfLinesEdited(KStream<String, GithubCommitMessage> input) {
+        return input.map((key, value) -> KeyValue.pair(key, (long) value.getLinesChanged()))
                 .groupByKey()
-                .reduce(Long::sum)
-                .toStream()
-                .to(NUMBER_OF_LINES_EDITED, Produced.with(Serdes.String(), Serdes.Long()));
+                .reduce(Long::sum);
     }
 
-    private void measureIncrementOfLines(KStream<String, GithubCommitMessage> input) {
-        input.map((key, value) -> KeyValue.pair(key, (long) value.getLinesAdded() - value.getLinesDeleted()))
+    private KTable<String, Long> measureIncrementOfLines(KStream<String, GithubCommitMessage> input) {
+        return input.map((key, value) -> KeyValue.pair(key, (long) value.getLinesAdded() - value.getLinesDeleted()))
                 .groupByKey()
-                .reduce(Long::sum)
-                .toStream()
-                .to(INCREMENT_OF_LINES, Produced.with(Serdes.String(), Serdes.Long()));
+                .reduce(Long::sum);
     }
 
-    private void measureTopFiveContributorsByLines(KStream<String, GithubCommitMessage> input) {
+    private KTable<String, TopFiveContributors> measureTopFiveContributorsByLines(KStream<String, GithubCommitMessage> input) {
         KTable<String, Long> linesPerUser = input
                 .map((key, value) -> KeyValue.pair(value.getCommitterName(), (long) value.getLinesChanged()))
                 .groupBy((key, value) -> key)
                 .reduce(Long::sum);
 
-        convertKTableToTopFive(linesPerUser, TOP_FIVE_CONTRIBUTORS_BY_LINES_EDITED);
+        return convertKTableToTopFive(linesPerUser);
     }
 
-    private void measurePercentOfCommitsWithTheSameAuthorAndCommitter(KStream<String, GithubCommitMessage> input) {
-        input.map((key, value) -> KeyValue.pair(value.getCommitId(), value.getAuthorName().equals(value.getCommitterName())))
+    private KTable<String, Double> measurePercentOfCommitsWithTheSameAuthorAndCommitter(KStream<String, GithubCommitMessage> input) {
+        return input.map((key, value) -> KeyValue.pair(value.getCommitId(), value.getAuthorName().equals(value.getCommitterName())))
                 .groupBy((key, value) -> value)
                 .count()
                 .groupBy((key, value) -> KeyValue.pair("stats", MyPair.of(key, value)),
-                        Grouped.with(Serdes.String(), new JsonSerde<>(MyPair.class)))
+                        Grouped.with(Serdes.String(), Serdes.serdeFrom(MyPair.class)))
                 .aggregate(
                         SameAuthorStats::new,
                         (key, newValue, aggregate) -> {
@@ -116,13 +146,13 @@ public class MetricsProcessingStream {
                         }
                 ).toStream()
                 .map((key, value) -> KeyValue.pair(key, value.getPercent()))
-                .to(PERCENT_OF_COMMITS_WITH_THE_SAME_AUTHOR_AND_COMMITER, Produced.with(Serdes.String(), Serdes.Double()));
+                .toTable();
     }
 
-    private void convertKTableToTopFive(KTable<String, Long> linesPerUser, String topicName) {
-        linesPerUser
+    private KTable<String, TopFiveContributors> convertKTableToTopFive(KTable<String, Long> linesPerUser) {
+        return linesPerUser
                 .groupBy((key, value) -> KeyValue.pair("all", MyPair.of(key, value)),
-                        Grouped.with(Serdes.String(), new JsonSerde<>(MyPair.class)))
+                        Grouped.with(Serdes.String(), Serdes.serdeFrom(MyPair.class)))
                 .aggregate(
                         TopFiveContributors::new,
                         (key, value, aggregate) -> {
@@ -132,9 +162,7 @@ public class MetricsProcessingStream {
                         (key, value, aggregate) -> {
                             aggregate.remove((String) value.getLeft(), (Long) value.getRight());
                             return aggregate;
-                        })
-                .toStream()
-                .to(topicName, Produced.with(Serdes.String(), new JsonSerde<>(TopFiveContributors.class)));
+                        });
     }
 
 }

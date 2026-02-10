@@ -28,7 +28,7 @@ import java.util.Map;
 public class AppConfig {
 
     public static final String GITHUB_ACCOUNTS_TOPIC = "github-accounts";
-    public static final String GITHUB_METRICS_PREFIX = "github-metrics-";
+    public static final String GITHUB_METRICS_TOPIC = "github-metrics";
 
     @Bean
     public NewTopic topic() {
