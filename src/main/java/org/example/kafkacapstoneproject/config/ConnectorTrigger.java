@@ -27,7 +27,7 @@ public class ConnectorTrigger {
         this.webClient = webClient;
         payload = Map.of(
                 "name", "csv-loader",
-                "confing", Map.of(
+                "config", Map.of(
                         "connector.class", "org.apache.kafka.connect.file.FileStreamSourceConnector",
                         "file", "/data/github-accounts.csv",
                         "topic", AppConfig.GITHUB_ACCOUNTS_TOPIC
@@ -45,6 +45,7 @@ public class ConnectorTrigger {
                 .onStatus(HttpStatusCode::is4xxClientError, this::handleError)
                 .onStatus(HttpStatusCode::is5xxServerError, this::handleError)
                 .bodyToMono(Void.class)
+                .doOnError((Throwable e) -> log.error("Error triggering file reader connector", e))
                 .block();
     }
 

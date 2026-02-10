@@ -3,6 +3,7 @@ package org.example.kafkacapstoneproject.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.Serializable;
@@ -11,6 +12,7 @@ import java.util.TreeSet;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class TopFiveContributors implements Serializable {
 
     TreeSet<Pair<Long, String>> namesByCommits = new TreeSet<>((o1, o2) -> {

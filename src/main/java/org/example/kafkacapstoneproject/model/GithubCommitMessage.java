@@ -3,6 +3,7 @@ package org.example.kafkacapstoneproject.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.kohsuke.github.GHCommit;
 
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.util.Date;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class GithubCommitMessage implements Serializable {
 
     private String commitId;

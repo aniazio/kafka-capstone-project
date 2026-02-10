@@ -2,11 +2,13 @@ package org.example.kafkacapstoneproject.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.Map;
 
 @Data
 @AllArgsConstructor
+@ToString
 public class MetricsAggregation {
 
     private Long totalCommits;
