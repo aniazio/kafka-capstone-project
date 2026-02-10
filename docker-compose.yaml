@@ -113,12 +113,22 @@ services:
       - controller-2
       - controller-3
 
-  connect:
+  connect-reader:
     image: apache/kafka:4.1.1
-    container_name: connect
+    container_name: connect-reader
     ports:
       - "8083:8083"
     volumes:
       - ./connector-config/file-reader-connector-config.properties:/opt/kafka/config/custom-connect.properties
       - ./data:/data
+    command: /opt/kafka/bin/connect-distributed.sh /opt/kafka/config/custom-connect.properties
+
+  connect-writer:
+    image: apache/kafka:4.1.1
+    container_name: connect-writer
+    ports:
+      - "8084:8083"
+    volumes:
+      - ./connector-config/file-writer-connector-config.properties:/opt/kafka/config/custom-connect.properties
+      - ./output:/data
     command: /opt/kafka/bin/connect-distributed.sh /opt/kafka/config/custom-connect.properties

@@ -2,7 +2,6 @@ package org.example.kafkacapstoneproject.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -20,12 +19,17 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 @Slf4j
 public class ConnectorTrigger {
 
-    private final WebClient webClient;
-    private final Map<String, Object> payload;
+    private final WebClient webClientReader = WebClient.builder()
+            .baseUrl("http://localhost:8083")
+            .build();
+    private final WebClient webClientWriter = WebClient.builder()
+            .baseUrl("http://localhost:8084")
+            .build();
+    private final Map<String, Object> payloadReader;
+    private final Map<String, Object> payloadWriter;
 
-    public ConnectorTrigger(@Qualifier("fileReaderConnectorWebClient") WebClient webClient) {
-        this.webClient = webClient;
-        payload = Map.of(
+    public ConnectorTrigger() {
+        payloadReader = Map.of(
                 "name", "csv-loader",
                 "config", Map.of(
                         "connector.class", "org.apache.kafka.connect.file.FileStreamSourceConnector",
@@ -33,13 +37,26 @@ public class ConnectorTrigger {
                         "topic", AppConfig.GITHUB_ACCOUNTS_TOPIC
                 )
         );
+        payloadWriter = Map.of(
+                "name", "metrics-sink",
+                "config", Map.of(
+                        "connector.class", "org.apache.kafka.connect.file.FileStreamSinkConnector",
+                        "file", "/output/metrics.csv",
+                        "topic", AppConfig.GITHUB_METRICS_TOPIC
+                )
+        );
     }
 
     @PostConstruct
     public void triggerFileReader() {
-        webClient.post()
+        trigger(webClientReader, payloadReader);
+        trigger(webClientWriter, payloadWriter);
+    }
+
+    private void trigger(WebClient webClientReader, Map<String, Object> payloadReader) {
+        webClientReader.post()
                 .uri("/connectors")
-                .bodyValue(payload)
+                .bodyValue(payloadReader)
                 .header(CONTENT_TYPE, "application/json")
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, this::handleError)

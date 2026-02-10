@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.IOException;
 
@@ -53,28 +52,4 @@ public class AppConfig {
                 .withEndpoint("https://api.github.com")
                 .build();
     }
-
-    @Bean
-    public WebClient fileReaderConnectorWebClient() {
-        return WebClient.builder()
-                .baseUrl("http://localhost:8083")
-                .build();
-    }
-
-//    @Bean
-//    public StreamsBuilder streamsBuilder() {
-//        return new StreamsBuilder();
-//    }
-
-//    @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
-//    public KafkaStreamsConfiguration kafkaStreamConfiguration() {
-//        Map<String, Object> props = new HashMap<>();
-//        props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-metrics");
-//        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092,localhost:39092,localhost:49092");
-//        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-//        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-//        props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once_v2");
-
-//        return new KafkaStreamsConfiguration(props);
-//    }
 }
