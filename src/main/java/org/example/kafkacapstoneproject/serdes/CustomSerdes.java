@@ -2,6 +2,7 @@ package org.example.kafkacapstoneproject.serdes;
 
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.example.kafkacapstoneproject.model.CommitsByLanguage;
 import org.example.kafkacapstoneproject.model.GitHubAccountMessage;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
 import org.example.kafkacapstoneproject.model.MetricsAggregation;
@@ -53,6 +54,12 @@ public final class CustomSerdes {
     public static Serde<MyPairBooleanLong> myPairBooleanLong() {
         JsonSerializer<MyPairBooleanLong> serializer = new JsonSerializer<>();
         JsonDeserializer<MyPairBooleanLong> deserializer = new JsonDeserializer<>(MyPairBooleanLong.class);
+        return Serdes.serdeFrom(serializer, deserializer);
+    }
+
+    public static Serde<CommitsByLanguage> commitsByLanguage() {
+        JsonSerializer<CommitsByLanguage> serializer = new JsonSerializer<>();
+        JsonDeserializer<CommitsByLanguage> deserializer = new JsonDeserializer<>(CommitsByLanguage.class);
         return Serdes.serdeFrom(serializer, deserializer);
     }
 }

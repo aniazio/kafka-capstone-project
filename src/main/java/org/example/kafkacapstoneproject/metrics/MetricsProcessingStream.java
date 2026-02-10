@@ -7,8 +7,10 @@ import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Grouped;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KTable;
+import org.apache.kafka.streams.kstream.Materialized;
 import org.apache.kafka.streams.kstream.Produced;
 import org.example.kafkacapstoneproject.config.AppConfig;
+import org.example.kafkacapstoneproject.model.CommitsByLanguage;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
 import org.example.kafkacapstoneproject.model.MetricsAggregation;
 import org.example.kafkacapstoneproject.model.MyPairBooleanLong;
@@ -18,9 +20,6 @@ import org.example.kafkacapstoneproject.model.TopFiveContributors;
 import org.example.kafkacapstoneproject.serdes.CustomSerdes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class MetricsProcessingStream {
@@ -32,7 +31,7 @@ public class MetricsProcessingStream {
 
         KTable<String, Long> totalCommits = measureTotalNumberOfCommits(input);
         KTable<String, Long> totalCommiters = measureTotalNumberOfCommiters(input);
-        KTable<String, Map<String, Long>> commitsPerLanguage = measureCommitsPerLanguage(input);
+        KTable<String, CommitsByLanguage> commitsPerLanguage = measureCommitsPerLanguage(input);
         KTable<String, TopFiveContributors> topFiveContributorsByCommits = measureTopFiveContributorsByCommits(input);
         KTable<String, Long> numberOfLines = measureNumberOfLinesEdited(input);
         KTable<String, Long> incrementOfLines = measureIncrementOfLines(input);
@@ -85,12 +84,12 @@ public class MetricsProcessingStream {
                 .count();
     }
 
-    private KTable<String, Map<String, Long>> measureCommitsPerLanguage(KStream<String, GithubCommitMessage> input) {
+    private KTable<String, CommitsByLanguage> measureCommitsPerLanguage(KStream<String, GithubCommitMessage> input) {
         return input.groupBy((key, value) -> value.getLanguage())
                 .count()
                 .groupBy((key, value) -> KeyValue.pair("all", MyPairStringLong.of(key, value)),
                         Grouped.with(Serdes.String(), CustomSerdes.myPairStringLong()))
-                .aggregate(HashMap::new,
+                .aggregate(CommitsByLanguage::new,
                         (key, value, aggregate) -> {
                             aggregate.put((String) value.getLeft(), (Long) value.getRight());
                             return aggregate;
@@ -98,7 +97,8 @@ public class MetricsProcessingStream {
                         (key, value, aggregate) -> {
                             aggregate.remove((String) value.getLeft(), (Long) value.getRight());
                             return aggregate;
-                        });
+                        },
+                        Materialized.with(Serdes.String(), CustomSerdes.commitsByLanguage()));
     }
 
     private KTable<String, TopFiveContributors> measureTopFiveContributorsByCommits(KStream<String, GithubCommitMessage> input) {
@@ -132,7 +132,8 @@ public class MetricsProcessingStream {
 
     private KTable<String, Double> measurePercentOfCommitsWithTheSameAuthorAndCommitter(KStream<String, GithubCommitMessage> input) {
         return input.map((key, value) -> KeyValue.pair(value.getCommitId(), value.getAuthorName().equals(value.getCommitterName())))
-                .groupBy((key, value) -> value)
+                .groupBy((key, value) -> value,
+                        Grouped.with(Serdes.Boolean(), Serdes.Boolean()))
                 .count()
                 .groupBy((key, value) -> KeyValue.pair("stats", MyPairBooleanLong.of(key, value)),
                         Grouped.with(Serdes.String(), CustomSerdes.myPairBooleanLong()))
@@ -145,10 +146,11 @@ public class MetricsProcessingStream {
                         (key, oldValue, aggregate) -> {
                             aggregate.removeStat((Long) oldValue.getRight(), (Boolean) oldValue.getLeft());
                             return aggregate;
-                        }
+                        },
+                        Materialized.with(Serdes.String(), CustomSerdes.sameAuthorStats())
                 ).toStream()
                 .map((key, value) -> KeyValue.pair(key, value.getPercent()))
-                .toTable();
+                .toTable(Materialized.with(Serdes.String(), Serdes.Double()));
     }
 
     private KTable<String, TopFiveContributors> convertKTableToTopFive(KTable<String, Long> linesPerUser) {
@@ -164,7 +166,8 @@ public class MetricsProcessingStream {
                         (key, value, aggregate) -> {
                             aggregate.remove((String) value.getLeft(), (Long) value.getRight());
                             return aggregate;
-                        });
+                        },
+                        Materialized.with(Serdes.String(), CustomSerdes.topFiveContributors()));
     }
 
 }

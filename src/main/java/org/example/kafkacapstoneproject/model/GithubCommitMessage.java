@@ -8,7 +8,11 @@ import org.kohsuke.github.GHCommit;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -36,4 +40,20 @@ public class GithubCommitMessage implements Serializable {
         this.language = language;
     }
 
+    private static final Random random = new Random();
+    private static List<String> authors = List.of("John", "Mark", "Anna");
+    private static List<String> languages = List.of("Java", "Python", "C++", "C#", "JavaScript");
+
+    public static GithubCommitMessage random() {
+        GithubCommitMessage result = new GithubCommitMessage();
+        result.setCommitId(UUID.randomUUID().toString());
+        result.setAuthorName(authors.get(random.nextInt(authors.size())));
+        result.setCommitDate(Date.from(Instant.now()));
+        result.setCommitterName(authors.get(random.nextInt(authors.size())));
+        result.setLinesAdded(random.nextInt(100));
+        result.setLinesDeleted(random.nextInt(100));
+        result.setLinesChanged(random.nextInt(100));
+        result.setLanguage(languages.get(random.nextInt(languages.size())));
+        return result;
+    }
 }
