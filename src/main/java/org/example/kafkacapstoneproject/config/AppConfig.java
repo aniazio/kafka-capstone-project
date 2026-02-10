@@ -20,6 +20,7 @@ import java.io.IOException;
 public class AppConfig {
 
     public static final String GITHUB_ACCOUNTS_TOPIC = "github-accounts";
+    public static final String GITHUB_COMMITS_TOPIC = "github-commits";
     public static final String GITHUB_METRICS_TOPIC = "github-metrics";
 
     @Bean
@@ -33,6 +34,14 @@ public class AppConfig {
     @Bean
     public NewTopic metricsTopic() {
         return TopicBuilder.name(GITHUB_METRICS_TOPIC)
+                .partitions(3)
+                .replicas(2)
+                .build();
+    }
+
+    @Bean
+    public NewTopic commitsTopic() {
+        return TopicBuilder.name(GITHUB_COMMITS_TOPIC)
                 .partitions(3)
                 .replicas(2)
                 .build();

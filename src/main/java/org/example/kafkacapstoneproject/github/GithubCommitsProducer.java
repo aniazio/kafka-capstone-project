@@ -32,7 +32,7 @@ public class GithubCommitsProducer {
 
     private void sendCommits(List<GithubCommitMessage> commits, String accountName) {
         commits.stream()
-                .map(commit -> kafkaTemplate.send(AppConfig.GITHUB_ACCOUNTS_TOPIC, accountName, commit))
+                .map(commit -> kafkaTemplate.send(AppConfig.GITHUB_COMMITS_TOPIC, accountName, commit))
                 .forEach(future -> future.whenComplete(this::handleException));
     }
 

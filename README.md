@@ -10,17 +10,17 @@ This project is a capstone project for the Kafka course.
 # start Kafka
 docker compose up -d
 
-# create topic
-docker exec --workdir /opt/kafka/bin/ -it broker-1 sh
-./kafka-topics.sh --bootstrap-server broker-1:19092,broker-2:19092,broker-3:19092 --create --topic github-accounts
-./kafka-topics.sh --bootstrap-server broker-1:19092,broker-2:19092,broker-3:19092 --create --topic github-metrics
-exit
+## create topic - NOT NEEDED
+#docker exec --workdir /opt/kafka/bin/ -it broker-1 sh
+#./kafka-topics.sh --bootstrap-server broker-1:19092,broker-2:19092,broker-3:19092 --create --topic github-accounts
+#./kafka-topics.sh --bootstrap-server broker-1:19092,broker-2:19092,broker-3:19092 --create --topic github-metrics
+#exit
 
 # stop Kafka
 docker compose down
 ```
 
-## Commands to trigger file read by connector - need to write it in the code
+## Commands to trigger file read by connector - need to write it in the code NOT NEEDED
 
 ```bash
 curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{

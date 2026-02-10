@@ -27,7 +27,7 @@ public class MetricsProcessingStream {
 
     @Autowired
     public void process(StreamsBuilder streamsBuilder) {
-        KStream<String, GithubCommitMessage> input = streamsBuilder.stream(AppConfig.GITHUB_ACCOUNTS_TOPIC,
+        KStream<String, GithubCommitMessage> input = streamsBuilder.stream(AppConfig.GITHUB_COMMITS_TOPIC,
                 Consumed.with(Serdes.String(), CustomSerdes.githubCommitMessage()));
 
         KTable<String, Long> totalCommits = measureTotalNumberOfCommits(input);
