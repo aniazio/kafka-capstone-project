@@ -41,7 +41,7 @@ public class ConnectorTrigger {
                 "name", "metrics-sink",
                 "config", Map.of(
                         "connector.class", "org.apache.kafka.connect.file.FileStreamSinkConnector",
-                        "file", "/output/metrics.csv",
+                        "file", "/output/metrics.json",
                         "topic", AppConfig.GITHUB_METRICS_TOPIC
                 )
         );

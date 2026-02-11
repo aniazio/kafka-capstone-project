@@ -10,7 +10,7 @@ import lombok.ToString;
 public class MetricsAggregation {
 
     private Long totalCommits;
-    private Long totalCommiters;
+    private Integer totalCommiters;
     private CommitsByLanguage commitsPerLanguage;
     private TopFiveContributors topFiveContributorsByCommits;
     private Long numberOfLines;
@@ -18,7 +18,7 @@ public class MetricsAggregation {
     private TopFiveContributors topFiveContributorsByLines;
     private Double percentOfCommitsWithTheSameAuthorAndCommitter;
 
-    public MetricsAggregation(Long totalCommits, Long totalCommiters) {
+    public MetricsAggregation(Long totalCommits, Integer totalCommiters) {
         this.totalCommits = totalCommits;
         this.totalCommiters = totalCommiters;
     }

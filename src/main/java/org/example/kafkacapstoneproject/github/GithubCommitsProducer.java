@@ -22,6 +22,7 @@ public class GithubCommitsProducer {
 
     @KafkaListener(id = "github-listener", topics = AppConfig.GITHUB_ACCOUNTS_TOPIC)
     public void listen(String message) {
+        log.info("Github account message received: {}", message);
         final GitHubAccountMessage gitHubAccountMessage = GitHubAccountMessage.buildFromCsv(message);
         if (gitHubAccountMessage == null) {
             return;

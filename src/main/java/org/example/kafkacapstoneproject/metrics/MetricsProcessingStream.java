@@ -1,5 +1,6 @@
 package org.example.kafkacapstoneproject.metrics;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -21,8 +22,14 @@ import org.example.kafkacapstoneproject.serdes.CustomSerdes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Component
+@Slf4j
 public class MetricsProcessingStream {
+
+    private final static String COMMON_KEY = "all";
 
     @Autowired
     public void process(StreamsBuilder streamsBuilder) {
@@ -30,7 +37,7 @@ public class MetricsProcessingStream {
                 Consumed.with(Serdes.String(), CustomSerdes.githubCommitMessage()));
 
         KTable<String, Long> totalCommits = measureTotalNumberOfCommits(input);
-        KTable<String, Long> totalCommiters = measureTotalNumberOfCommiters(input);
+        KTable<String, Integer> totalCommiters = measureTotalNumberOfCommiters(input);
         KTable<String, CommitsByLanguage> commitsPerLanguage = measureCommitsPerLanguage(input);
         KTable<String, TopFiveContributors> topFiveContributorsByCommits = measureTopFiveContributorsByCommits(input);
         KTable<String, Long> numberOfLines = measureNumberOfLinesEdited(input);
@@ -75,19 +82,27 @@ public class MetricsProcessingStream {
     }
 
     private KTable<String, Long> measureTotalNumberOfCommits(KStream<String, GithubCommitMessage> input) {
-        return input.groupBy((key, value) -> "total-count")
+        return input.groupBy((key, value) -> COMMON_KEY)
                 .count();
     }
 
-    private KTable<String, Long> measureTotalNumberOfCommiters(KStream<String, GithubCommitMessage> input) {
-        return input.groupBy((key, value) -> value.getCommitterName())
-                .count();
+    private KTable<String, Integer> measureTotalNumberOfCommiters(KStream<String, GithubCommitMessage> input) {
+        return input.groupBy((key, value) -> COMMON_KEY)
+                .aggregate(
+                        HashSet::new,
+                        (key, value, aggregate) -> {
+                            aggregate.add(value.getCommitterName());
+                            return aggregate;
+                        },
+                        Materialized.with(Serdes.String(), CustomSerdes.hashSet())
+                )
+                .mapValues(Set::size);
     }
 
     private KTable<String, CommitsByLanguage> measureCommitsPerLanguage(KStream<String, GithubCommitMessage> input) {
         return input.groupBy((key, value) -> value.getLanguage())
                 .count()
-                .groupBy((key, value) -> KeyValue.pair("all", MyPairStringLong.of(key, value)),
+                .groupBy((key, value) -> KeyValue.pair(COMMON_KEY, MyPairStringLong.of(key, value)),
                         Grouped.with(Serdes.String(), CustomSerdes.myPairStringLong()))
                 .aggregate(CommitsByLanguage::new,
                         (key, value, aggregate) -> {
@@ -110,13 +125,13 @@ public class MetricsProcessingStream {
     }
 
     private KTable<String, Long> measureNumberOfLinesEdited(KStream<String, GithubCommitMessage> input) {
-        return input.map((key, value) -> KeyValue.pair(key, (long) value.getLinesChanged()))
+        return input.map((key, value) -> KeyValue.pair(COMMON_KEY, (long) value.getLinesChanged()))
                 .groupByKey(Grouped.with(Serdes.String(), Serdes.Long()))
                 .reduce(Long::sum);
     }
 
     private KTable<String, Long> measureIncrementOfLines(KStream<String, GithubCommitMessage> input) {
-        return input.map((key, value) -> KeyValue.pair(key, (long) value.getLinesAdded() - value.getLinesDeleted()))
+        return input.map((key, value) -> KeyValue.pair(COMMON_KEY, (long) value.getLinesAdded() - value.getLinesDeleted()))
                 .groupByKey(Grouped.with(Serdes.String(), Serdes.Long()))
                 .reduce(Long::sum);
     }
@@ -135,7 +150,7 @@ public class MetricsProcessingStream {
                 .groupBy((key, value) -> value,
                         Grouped.with(Serdes.Boolean(), Serdes.Boolean()))
                 .count()
-                .groupBy((key, value) -> KeyValue.pair("stats", MyPairBooleanLong.of(key, value)),
+                .groupBy((key, value) -> KeyValue.pair(COMMON_KEY, MyPairBooleanLong.of(key, value)),
                         Grouped.with(Serdes.String(), CustomSerdes.myPairBooleanLong()))
                 .aggregate(
                         SameAuthorStats::new,
@@ -155,7 +170,7 @@ public class MetricsProcessingStream {
 
     private KTable<String, TopFiveContributors> convertKTableToTopFive(KTable<String, Long> linesPerUser) {
         return linesPerUser
-                .groupBy((key, value) -> KeyValue.pair("all", MyPairStringLong.of(key, value)),
+                .groupBy((key, value) -> KeyValue.pair(COMMON_KEY, MyPairStringLong.of(key, value)),
                         Grouped.with(Serdes.String(), CustomSerdes.myPairStringLong()))
                 .aggregate(
                         TopFiveContributors::new,

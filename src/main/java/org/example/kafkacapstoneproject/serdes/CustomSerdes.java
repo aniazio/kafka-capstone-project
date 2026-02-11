@@ -11,6 +11,8 @@ import org.example.kafkacapstoneproject.model.MyPairStringLong;
 import org.example.kafkacapstoneproject.model.SameAuthorStats;
 import org.example.kafkacapstoneproject.model.TopFiveContributors;
 
+import java.util.HashSet;
+
 public final class CustomSerdes {
     private CustomSerdes() {
     }
@@ -60,6 +62,12 @@ public final class CustomSerdes {
     public static Serde<CommitsByLanguage> commitsByLanguage() {
         JsonSerializer<CommitsByLanguage> serializer = new JsonSerializer<>();
         JsonDeserializer<CommitsByLanguage> deserializer = new JsonDeserializer<>(CommitsByLanguage.class);
+        return Serdes.serdeFrom(serializer, deserializer);
+    }
+
+    public static Serde<HashSet> hashSet() {
+        JsonSerializer<HashSet> serializer = new JsonSerializer<>();
+        JsonDeserializer<HashSet> deserializer = new JsonDeserializer<>(HashSet.class);
         return Serdes.serdeFrom(serializer, deserializer);
     }
 }

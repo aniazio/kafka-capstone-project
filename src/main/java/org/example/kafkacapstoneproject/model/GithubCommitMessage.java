@@ -41,7 +41,7 @@ public class GithubCommitMessage implements Serializable {
     }
 
     private static final Random random = new Random();
-    private static List<String> authors = List.of("John", "Mark", "Anna");
+    private static List<String> authors = List.of("John", "Mark", "Anna", "Simon", "Sara", "Alfred", "Barbara");
     private static List<String> languages = List.of("Java", "Python", "C++", "C#", "JavaScript");
 
     public static GithubCommitMessage random() {

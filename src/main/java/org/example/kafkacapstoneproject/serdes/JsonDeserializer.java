@@ -16,14 +16,9 @@ public class JsonDeserializer<T> implements Deserializer<T> {
     private final Gson gson = new GsonBuilder().create();
 
     private Class<T> destinationClass;
-    private Type reflectionTypeToken;
 
     public JsonDeserializer(Class<T> destinationClass) {
         this.destinationClass = destinationClass;
-    }
-
-    public JsonDeserializer(Type reflectionTypeToken) {
-        this.reflectionTypeToken = reflectionTypeToken;
     }
 
     @Override
@@ -37,7 +32,7 @@ public class JsonDeserializer<T> implements Deserializer<T> {
             return null;
 
         try {
-            Type type = destinationClass != null ? destinationClass : reflectionTypeToken;
+            Type type = destinationClass;
             return gson.fromJson(new String(bytes, StandardCharsets.UTF_8), type);
         } catch (Exception e) {
             log.error(destinationClass.getName());
