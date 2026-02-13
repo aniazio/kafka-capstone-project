@@ -6,47 +6,52 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.Serializable;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
+@Slf4j
 public class GitHubAccountMessage implements Serializable {
 
     private String accountName;
-    private Date date;
+    private String date;
 
     public static GitHubAccountMessage buildFromCsv(String message) {
         String[] split = message.split(",");
         if (split.length != 2 || StringUtils.isBlank(split[0]) || StringUtils.isBlank(split[1])) {
+            log.error("Invalid message: {}", message);
             return null;
         }
 
 
         return GitHubAccountMessage.builder()
                 .accountName(split[0].trim())
-                .date(Date.from(getDate(split[1]).toInstant(ZoneOffset.UTC)))
+                .date(getDate(split[1]).atZone(ZoneId.of(ZoneOffset.UTC.getId())).format(DateTimeFormatter.ISO_LOCAL_DATE))
                 .build();
     }
 
-    private static LocalDateTime getDate(String s) {
+    private static Instant getDate(String s) {
         LocalDateTime now = LocalDateTime.now();
         String timeUnit = s.substring(s.length() - 1).toLowerCase();
         long value = Long.valueOf(s.substring(0, s.length() - 1));
 
         return switch (timeUnit) {
-            case "y" -> now.minusYears(value);
-            case "w" -> now.minusWeeks(value);
-            case "d" -> now.minusDays(value);
-            case "h" -> now.minusHours(value);
-            case "m" -> now.minusMinutes(value);
-            case "s" -> now.minusSeconds(value);
+            case "y" -> now.minusYears(value).toInstant(ZoneOffset.UTC);
+            case "w" -> now.minusWeeks(value).toInstant(ZoneOffset.UTC);
+            case "d" -> now.minusDays(value).toInstant(ZoneOffset.UTC);
+            case "h" -> now.minusHours(value).toInstant(ZoneOffset.UTC);
+            case "m" -> now.minusMinutes(value).toInstant(ZoneOffset.UTC);
+            case "s" -> now.minusSeconds(value).toInstant(ZoneOffset.UTC);
             default -> throw new IllegalArgumentException("Invalid time unit: " + timeUnit);
         };
     }

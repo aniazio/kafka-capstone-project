@@ -25,6 +25,7 @@ public class GithubCommitsProducer {
         log.info("Github account message received: {}", message);
         final GitHubAccountMessage gitHubAccountMessage = GitHubAccountMessage.buildFromCsv(message);
         if (gitHubAccountMessage == null) {
+            log.error("Invalid message: {}", message);
             return;
         }
         List<GithubCommitMessage> commits = githubApiAdapter.getCommits(gitHubAccountMessage);

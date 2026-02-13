@@ -28,10 +28,18 @@ curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json
   "config": {
     "connector.class": "org.apache.kafka.connect.file.FileStreamSourceConnector",
     "file": "/data/github-accounts.csv",  
-    "topic": "test-topic"
+    "topic": "github-accounts"
   }
 }'
 ```
 
-TODO: http://docs.github.com/en/rest/search/search?apiVersion=2022-11-28#search-commits
-build a response
+```bash
+curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{
+  "name": "metrics-sink",
+  "config": {
+    "connector.class": "org.apache.kafka.connect.file.FileStreamSinkConnector",
+    "file": "/output/metrics.json",  
+    "topics": "github-metrics"
+  }
+}'
+```
