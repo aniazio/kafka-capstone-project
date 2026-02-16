@@ -1,5 +1,6 @@
 package org.example.kafkacapstoneproject.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
@@ -40,19 +41,20 @@ public class ConnectorTrigger {
                 "name", "metrics-sink",
                 "config", Map.of(
                         "connector.class", "org.apache.kafka.connect.file.FileStreamSinkConnector",
-                        "file", "/output/metrics.json",
+                        "file", "/data/metrics.json",
                         "topics", AppConfig.GITHUB_METRICS_TOPIC
                 )
         );
     }
 
+    @PostConstruct
     public void triggerFileReader() {
         trigger(webClientReader, payloadReader);
         trigger(webClientWriter, payloadWriter);
     }
 
-    private void trigger(WebClient webClientReader, Map<String, Object> payloadReader) {
-        webClientReader.post()
+    private void trigger(WebClient webClient, Map<String, Object> payloadReader) {
+        webClient.post()
                 .uri("/connectors")
                 .bodyValue(payloadReader)
                 .header(CONTENT_TYPE, "application/json")

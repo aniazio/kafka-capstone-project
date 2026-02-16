@@ -34,11 +34,11 @@ curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json
 ```
 
 ```bash
-curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{
+curl -X POST http://localhost:8084/connectors -H "Content-Type: application/json" -d '{
   "name": "metrics-sink",
   "config": {
     "connector.class": "org.apache.kafka.connect.file.FileStreamSinkConnector",
-    "file": "/output/metrics.json",  
+    "file": "/data/metrics.json",  
     "topics": "github-metrics"
   }
 }'

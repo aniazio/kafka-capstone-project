@@ -47,32 +47,32 @@ public class MetricsProcessingStream {
 
         totalCommits.leftJoin(totalCommiters,
                         MetricsAggregation::new)
-                .leftJoin(commitsPerLanguage,
+                .join(commitsPerLanguage,
                         (metrics, newMetric) -> {
                             metrics.setCommitsPerLanguage(newMetric);
                             return metrics;
                         })
-                .leftJoin(topFiveContributorsByCommits,
+                .join(topFiveContributorsByCommits,
                         (metrics, newMetric) -> {
                             metrics.setTopFiveContributorsByCommits(newMetric);
                             return metrics;
                         })
-                .leftJoin(numberOfLines,
+                .join(numberOfLines,
                         (metrics, newMetric) -> {
                             metrics.setNumberOfLines(newMetric);
                             return metrics;
                         })
-                .leftJoin(incrementOfLines,
+                .join(incrementOfLines,
                         (metrics, newMetric) -> {
                             metrics.setIncrementOfLines(newMetric);
                             return metrics;
                         })
-                .leftJoin(topFiveContributorsByLines,
+                .join(topFiveContributorsByLines,
                         (metrics, newMetric) -> {
                             metrics.setTopFiveContributorsByLines(newMetric);
                             return metrics;
                         })
-                .leftJoin(percentOfCommitsWithTheSameAuthorAndCommitter,
+                .join(percentOfCommitsWithTheSameAuthorAndCommitter,
                         (metrics, newMetric) -> {
                             metrics.setPercentOfCommitsWithTheSameAuthorAndCommitter(newMetric);
                             return metrics;

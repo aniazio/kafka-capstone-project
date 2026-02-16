@@ -8,6 +8,7 @@ import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GHCommitSearchBuilder;
 import org.kohsuke.github.GHDirection;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterator;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -33,12 +34,16 @@ public class GithubApiAdapter {
 
         log.info("Search for {}, {}", requestParams.getAccountName(), requestParams.getDate());
 
-        for (GHCommit commit : search.list()) {
-            try {
+
+        try {
+            PagedIterator<GHCommit> it = search.list().iterator();
+            while (it.hasNext()) {
+                GHCommit commit = it.next();
                 results.add(new GithubCommitMessage(commit, commit.getOwner().getLanguage()));
-            } catch (IOException e) {
-                log.error("Error while constructing commit message", e);
             }
+        } catch (IOException e) {
+            log.error("Error during search", e);
+            throw new RuntimeException(e);
         }
 
         log.info("Commits: {}", results);
