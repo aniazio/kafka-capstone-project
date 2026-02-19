@@ -34,7 +34,7 @@ public class GithubApiAdapter {
                 .map(commit -> {
                     try {
                         log.info("Transforming search result for commit {}", commit);
-                        return new GithubCommitMessage(commit, commit.getOwner().getLanguage());
+                        return new GithubCommitMessage(commit, commit.getOwner() != null ? commit.getOwner().getLanguage() : null);
                     } catch (IOException e) {
                         log.error("Error during commit processing", e);
                         throw new RuntimeException(e);
