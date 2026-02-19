@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
@@ -37,6 +38,17 @@ public class GithubCommitMessage implements Serializable {
         this.linesAdded = commit.getLinesAdded();
         this.linesDeleted = commit.getLinesDeleted();
         this.linesChanged = commit.getLinesChanged();
+        this.language = language;
+    }
+
+    public GithubCommitMessage(Map<String, Object> githubResponse) {
+        this.commitId = (String) githubResponse.get("sha");
+        this.authorName = (String) ((Map<String, Object>) ((Map<String, Object>) githubResponse.get("commit")).get("author")).get("name");
+        this.commitDate = new Date();
+        this.committerName = (String) ((Map<String, Object>) ((Map<String, Object>) githubResponse.get("commit")).get("committer")).get("name");
+        this.linesAdded = 0;
+        this.linesDeleted = 0;
+        this.linesChanged = 0;
         this.language = language;
     }
 

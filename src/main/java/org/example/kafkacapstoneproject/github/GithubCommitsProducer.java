@@ -10,8 +10,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -28,14 +26,15 @@ public class GithubCommitsProducer {
             log.error("Invalid message: {}", message);
             return;
         }
-        List<GithubCommitMessage> commits = githubApiAdapter.getCommits(gitHubAccountMessage);
-        sendCommits(commits, gitHubAccountMessage.getAccountName());
+        githubApiAdapter.getCommits(gitHubAccountMessage)
+                .doOnNext(commit -> sendCommit(commit, gitHubAccountMessage.getAccountName()))
+                .doOnNext(commit -> log.info("Commit received {}", commit))
+                .subscribe();
     }
 
-    private void sendCommits(List<GithubCommitMessage> commits, String accountName) {
-        commits.stream()
-                .map(commit -> kafkaTemplate.send(AppConfig.GITHUB_COMMITS_TOPIC, accountName, commit))
-                .forEach(future -> future.whenComplete(this::handleException));
+    private void sendCommit(GithubCommitMessage commit, String accountName) {
+        kafkaTemplate.send(AppConfig.GITHUB_COMMITS_TOPIC, accountName, commit)
+                .whenComplete(this::handleException);
     }
 
     private void handleException(SendResult<String, GithubCommitMessage> stringGithubCommitMessageSendResult, Throwable throwable) {

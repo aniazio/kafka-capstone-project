@@ -34,7 +34,9 @@ public class ConnectorTrigger {
                 "config", Map.of(
                         "connector.class", "org.apache.kafka.connect.file.FileStreamSourceConnector",
                         "file", "/data/github-accounts.csv",
-                        "topic", AppConfig.GITHUB_ACCOUNTS_TOPIC
+                        "topic", AppConfig.GITHUB_ACCOUNTS_TOPIC,
+                        "tasks.max", 1,
+                        "batch.size", "10000"
                 )
         );
         payloadWriter = Map.of(
