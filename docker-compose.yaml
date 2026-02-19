@@ -62,6 +62,11 @@ services:
     #      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
     #      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
     #      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       - controller-1
       - controller-2
@@ -85,6 +90,11 @@ services:
     #      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
     #      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
     #      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       - controller-1
       - controller-2
@@ -108,6 +118,11 @@ services:
     #      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
     #      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
     #      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     depends_on:
       - controller-1
       - controller-2
@@ -116,19 +131,35 @@ services:
   connect-reader:
     image: apache/kafka:4.1.1
     container_name: connect-reader
+    restart: on-failure
     ports:
       - "8083:8083"
     volumes:
       - ./connector-config/file-reader-connector-config.properties:/opt/kafka/config/custom-connect.properties
       - ./data:/data
     command: /opt/kafka/bin/connect-distributed.sh /opt/kafka/config/custom-connect.properties
+    depends_on:
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+      broker-3:
+        condition: service_healthy
 
   connect-writer:
     image: apache/kafka:4.1.1
     container_name: connect-writer
+    restart: on-failure
     ports:
       - "8084:8083"
     volumes:
       - ./connector-config/file-writer-connector-config.properties:/opt/kafka/config/custom-connect.properties
       - ./output:/data
     command: /opt/kafka/bin/connect-distributed.sh /opt/kafka/config/custom-connect.properties
+    depends_on:
+      broker-1:
+        condition: service_healthy
+      broker-2:
+        condition: service_healthy
+      broker-3:
+        condition: service_healthy
