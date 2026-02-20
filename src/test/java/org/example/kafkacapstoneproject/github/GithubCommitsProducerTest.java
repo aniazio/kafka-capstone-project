@@ -1,5 +1,6 @@
 package org.example.kafkacapstoneproject.github;
 
+import org.example.kafkacapstoneproject.github.adapter.GithubApiAdapterImpl;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +26,7 @@ class GithubCommitsProducerTest {
     private KafkaTemplate<String, GithubCommitMessage> kafkaTemplate;
 
     @Mock
-    private GithubApiAdapter githubApiAdapter;
+    private GithubApiAdapterImpl githubApiAdapterImpl;
 
     @InjectMocks
     private GithubCommitsProducer githubCommitsProducer;
@@ -36,7 +37,7 @@ class GithubCommitsProducerTest {
     @Test
     void testListenWhenNoProblems() {
         String properMessage = "account,1h";
-        when(githubApiAdapter.getCommits(assertArg(message -> "account".equals(message.getAccountName()))))
+        when(githubApiAdapterImpl.getCommits(assertArg(message -> "account".equals(message.getAccountName()))))
                 .thenReturn(Flux.just(commit1, commit2));
         when(kafkaTemplate.send("github-commits", "account", commit1)).thenReturn(CompletableFuture.completedFuture(null));
         when(kafkaTemplate.send("github-commits", "account", commit2)).thenReturn(CompletableFuture.completedFuture(null));
@@ -49,7 +50,7 @@ class GithubCommitsProducerTest {
     @Test
     void testListenWhenErrorOnSendShouldProceed() {
         String properMessage = "account,1h";
-        when(githubApiAdapter.getCommits(assertArg(message -> "account".equals(message.getAccountName()))))
+        when(githubApiAdapterImpl.getCommits(assertArg(message -> "account".equals(message.getAccountName()))))
                 .thenReturn(Flux.just(commit1, commit2, commit3));
         when(kafkaTemplate.send("github-commits", "account", commit1)).thenReturn(CompletableFuture.completedFuture(null));
         when(kafkaTemplate.send("github-commits", "account", commit2)).thenReturn(CompletableFuture.failedFuture(new RuntimeException("test")));
@@ -67,6 +68,6 @@ class GithubCommitsProducerTest {
         githubCommitsProducer.listen(properMessage);
 
         then(kafkaTemplate).shouldHaveNoInteractions();
-        then(githubApiAdapter).shouldHaveNoInteractions();
+        then(githubApiAdapterImpl).shouldHaveNoInteractions();
     }
 }

@@ -78,6 +78,7 @@ public class MetricsProcessingStream {
                             return metrics;
                         })
                 .toStream()
+                .peek((key, value) -> log.info("Sending metrics: {}", value))
                 .to(AppConfig.GITHUB_METRICS_TOPIC, Produced.with(Serdes.String(), CustomSerdes.metricsAggregation()));
     }
 

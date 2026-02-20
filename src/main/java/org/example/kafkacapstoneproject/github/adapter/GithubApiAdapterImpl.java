@@ -1,4 +1,4 @@
-package org.example.kafkacapstoneproject.github;
+package org.example.kafkacapstoneproject.github.adapter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,6 +7,7 @@ import org.example.kafkacapstoneproject.model.GithubCommitMessage;
 import org.kohsuke.github.GHCommitSearchBuilder;
 import org.kohsuke.github.GHDirection;
 import org.kohsuke.github.GitHub;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -15,10 +16,12 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GithubApiAdapter {
+@Profile("!test")
+public class GithubApiAdapterImpl implements GithubApiAdapter {
 
     private final GitHub github;
 
+    @Override
     public Flux<GithubCommitMessage> getCommits(GitHubAccountMessage requestParams) {
         log.info("Getting commits for {}", requestParams.getAccountName());
 

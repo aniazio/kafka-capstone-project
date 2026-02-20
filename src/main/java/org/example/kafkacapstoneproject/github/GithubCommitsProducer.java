@@ -3,6 +3,7 @@ package org.example.kafkacapstoneproject.github;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.kafkacapstoneproject.config.AppConfig;
+import org.example.kafkacapstoneproject.github.adapter.GithubApiAdapter;
 import org.example.kafkacapstoneproject.model.GitHubAccountMessage;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -16,23 +17,25 @@ import org.springframework.stereotype.Component;
 public class GithubCommitsProducer {
 
     private final KafkaTemplate<String, GithubCommitMessage> kafkaTemplate;
-    private final GithubApiAdapter githubApiAdapter;
+    private final GithubApiAdapter githubApiAdapterImpl;
 
     @KafkaListener(id = "github-listener", topics = AppConfig.GITHUB_ACCOUNTS_TOPIC)
     public void listen(String message) {
         log.info("Github account message received: {}", message);
         final GitHubAccountMessage gitHubAccountMessage = GitHubAccountMessage.buildFromCsv(message);
+        log.info("Github account message built: {}", gitHubAccountMessage);
         if (gitHubAccountMessage == null) {
             log.error("Invalid message: {}", message);
             return;
         }
-        githubApiAdapter.getCommits(gitHubAccountMessage)
+        githubApiAdapterImpl.getCommits(gitHubAccountMessage)
                 .doOnNext(commit -> sendCommit(commit, gitHubAccountMessage.getAccountName()))
                 .doOnNext(commit -> log.info("Commit received {}", commit))
                 .subscribe();
     }
 
     private void sendCommit(GithubCommitMessage commit, String accountName) {
+        //Here different keys can be used, for example null (without second parameter) to have random distribution across partitions
         kafkaTemplate.send(AppConfig.GITHUB_COMMITS_TOPIC, accountName, commit)
                 .whenComplete(this::handleException);
     }

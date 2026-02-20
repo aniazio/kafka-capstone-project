@@ -1,4 +1,4 @@
-package org.example.kafkacapstoneproject.github;
+package org.example.kafkacapstoneproject.github.adapter;
 
 import org.example.kafkacapstoneproject.model.GitHubAccountMessage;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
@@ -23,7 +23,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class GithubApiAdapterTest {
+class GithubApiAdapterImplTest {
 
     @Mock
     private GitHub github;
@@ -41,7 +41,7 @@ class GithubApiAdapterTest {
     private PagedSearchIterable<GHCommit> commits;
 
     @InjectMocks
-    private GithubApiAdapter githubApiAdapter;
+    private GithubApiAdapterImpl githubApiAdapter;
 
     @Test
     void testGetCommitsWhenNoProblems() throws IOException {

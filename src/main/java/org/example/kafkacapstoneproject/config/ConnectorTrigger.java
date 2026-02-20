@@ -2,6 +2,7 @@ package org.example.kafkacapstoneproject.config;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ClientResponse;
@@ -17,6 +18,7 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
  */
 @Component
 @Slf4j
+@Profile("!test")
 public class ConnectorTrigger {
 
     private final WebClient webClientReader = WebClient.builder()

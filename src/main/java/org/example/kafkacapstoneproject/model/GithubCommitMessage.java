@@ -43,15 +43,15 @@ public class GithubCommitMessage implements Serializable {
     }
 
     private static final Random random = new Random();
-    private static List<String> authors = List.of("John", "Mark", "Anna", "Simon", "Sara", "Alfred", "Barbara");
+    public static List<String> RANDOM_AUTHORS = List.of("John", "Mark", "Anna", "Simon", "Sara", "Alfred", "Barbara");
     private static List<String> languages = List.of("Java", "Python", "C++", "C#", "JavaScript");
 
     public static GithubCommitMessage random() {
         GithubCommitMessage result = new GithubCommitMessage();
         result.setCommitId(UUID.randomUUID().toString());
-        result.setAuthorName(authors.get(random.nextInt(authors.size())));
+        result.setAuthorName(RANDOM_AUTHORS.get(random.nextInt(RANDOM_AUTHORS.size())));
         result.setCommitDate(Date.from(Instant.now()));
-        result.setCommitterName(authors.get(random.nextInt(authors.size())));
+        result.setCommitterName(RANDOM_AUTHORS.get(random.nextInt(RANDOM_AUTHORS.size())));
         result.setLinesAdded(random.nextInt(100));
         result.setLinesDeleted(random.nextInt(100));
         result.setLinesChanged(random.nextInt(100));

@@ -27,6 +27,9 @@ public class GitHubAccountMessage implements Serializable {
     private String date;
 
     public static GitHubAccountMessage buildFromCsv(String message) {
+        if (message.startsWith("\"") && message.endsWith("\"")) {
+            message = message.substring(1, message.length() - 1);
+        }
         String[] split = message.split(",");
         if (split.length != 2 || StringUtils.isBlank(split[0]) || StringUtils.isBlank(split[1])) {
             log.error("Invalid message: {}", message);
@@ -36,7 +39,7 @@ public class GitHubAccountMessage implements Serializable {
 
         return GitHubAccountMessage.builder()
                 .accountName(split[0].trim())
-                .date(getDate(split[1]).atZone(ZoneId.of(ZoneOffset.UTC.getId())).format(DateTimeFormatter.ISO_LOCAL_DATE))
+                .date(getDate(split[1].trim()).atZone(ZoneId.of(ZoneOffset.UTC.getId())).format(DateTimeFormatter.ISO_LOCAL_DATE))
                 .build();
     }
 
@@ -44,7 +47,6 @@ public class GitHubAccountMessage implements Serializable {
         LocalDateTime now = LocalDateTime.now();
         String timeUnit = s.substring(s.length() - 1).toLowerCase();
         long value = Long.valueOf(s.substring(0, s.length() - 1));
-
         return switch (timeUnit) {
             case "y" -> now.minusYears(value).toInstant(ZoneOffset.UTC);
             case "w" -> now.minusWeeks(value).toInstant(ZoneOffset.UTC);
