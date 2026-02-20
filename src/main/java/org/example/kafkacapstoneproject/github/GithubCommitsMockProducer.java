@@ -7,6 +7,9 @@ import org.example.kafkacapstoneproject.model.GithubCommitMessage;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * Mock producer for github commits for debugging purposes.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j

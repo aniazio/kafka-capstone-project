@@ -5,6 +5,9 @@ import org.example.kafkacapstoneproject.config.AppConfig;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+/**
+ * Basic listener for github metrics for debugging purposes.
+ */
 @Component
 @Slf4j
 public class BasicListener {

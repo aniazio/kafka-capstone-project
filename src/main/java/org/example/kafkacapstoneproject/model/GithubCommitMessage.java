@@ -1,6 +1,7 @@
 package org.example.kafkacapstoneproject.model;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
+@Builder
 public class GithubCommitMessage implements Serializable {
 
     private String commitId;
