@@ -7,6 +7,7 @@ import org.example.kafkacapstoneproject.model.GithubCommitMessage;
 import org.kohsuke.github.GHCommitSearchBuilder;
 import org.kohsuke.github.GHDirection;
 import org.kohsuke.github.GitHub;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -15,6 +16,7 @@ import java.io.IOException;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Profile("!test")
 public class GithubApiAdapterImpl implements GithubApiAdapter {
 
     private final GitHub github;

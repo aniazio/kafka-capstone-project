@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.kafkacapstoneproject.github.adapter.GithubApiAdapter;
 import org.example.kafkacapstoneproject.model.GitHubAccountMessage;
 import org.example.kafkacapstoneproject.model.GithubCommitMessage;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -17,7 +16,6 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 @Slf4j
 @Profile("test")
-@Primary
 public class MockGithubApiAdapter implements GithubApiAdapter {
 
     @Override
