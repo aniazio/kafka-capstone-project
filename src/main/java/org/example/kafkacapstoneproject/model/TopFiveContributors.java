@@ -15,12 +15,12 @@ import java.util.TreeSet;
 @ToString
 public class TopFiveContributors implements Serializable {
 
-    TreeSet<MyPair<Long, String>> namesByCommits = new TreeSet<>(Comparator.reverseOrder());
+    TreeSet<MyPair<Long, String>> namesByCommits = new TreeSet<>(Comparator.naturalOrder());
 
     public void add(String name, Long commits) {
         this.namesByCommits.add(MyPair.of(commits, name));
         if (namesByCommits.size() > 5) {
-            this.namesByCommits.remove(this.namesByCommits.last());
+            this.namesByCommits.remove(this.namesByCommits.first());
         }
     }
 
